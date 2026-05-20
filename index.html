@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Simulador E-pulse · Contenção TR</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --yellow:#FFD600;--yellow2:#FFE033;--bg:#111111;--surface:#1a1a1a;
+  --border:#2a2a2a;--muted:#666;--orange:#ff6b35;--red:#ff4466;
+}
+body{font-family:var(--font);background:var(--bg);min-height:100vh;padding:20px 14px 90px;color:#fff;-webkit-font-smoothing:antialiased;}
+.topo{text-align:center;margin-bottom:18px;}
+.marca{font-size:10px;font-weight:800;letter-spacing:5px;text-transform:uppercase;color:var(--yellow);margin-bottom:5px;}
+.topo h1{font-size:19px;font-weight:900;text-transform:uppercase;letter-spacing:-0.3px;color:#fff;}
+.tabs{display:flex;gap:6px;max-width:480px;margin:0 auto 14px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;padding:8px 13px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-family:var(--font);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;cursor:pointer;transition:all .18s;white-space:nowrap;}
+.tab.active{background:var(--yellow);border-color:var(--yellow);color:#111;}
+.tab.edit-tab{border-color:#333;color:#555;}
+.tab.edit-tab.active{background:var(--orange);border-color:var(--orange);color:#fff;}
+.input-area{max-width:480px;margin:0 auto 16px;background:var(--surface);border-radius:14px;padding:16px;border:1px solid var(--border);}
+.input-area label{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:9px;}
+.input-row{display:flex;gap:8px;align-items:stretch;}
+.prefix{background:var(--yellow);color:#111;font-weight:900;font-size:15px;padding:0 13px;border-radius:8px;display:flex;align-items:center;flex-shrink:0;}
+input[type=text]{flex:1;background:var(--bg);border:2px solid var(--border);border-radius:8px;padding:11px 13px;font-family:var(--font);font-size:21px;font-weight:800;color:#fff;outline:none;transition:border-color .18s;min-width:0;}
+input[type=text]:focus{border-color:var(--yellow);}
+.produtos-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#444;margin-top:13px;margin-bottom:8px;}
+.produtos-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:220px;overflow-y:auto;}
+.prod-btn{background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left;transition:all .13s;}
+.prod-btn:active,.prod-btn.selected{border-color:var(--yellow);background:rgba(255,214,0,.07);}
+.pnome{font-size:10px;font-weight:700;color:#ccc;display:block;line-height:1.3;margin-bottom:3px;}
+.ppreco{font-size:12px;font-weight:900;color:var(--yellow);}
+#card{width:100%;max-width:480px;margin:0 auto;background:var(--yellow);border-radius:18px;overflow:hidden;box-shadow:0 8px 32px rgba(255,214,0,.18);}
+.card-header{background:#111;padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.ch-left .brand{font-size:8px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--yellow);margin-bottom:2px;}
+.ch-left h2{font-size:12px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:.3px;}
+.ch-right{text-align:right;flex-shrink:0;}
+.ch-right .rl{font-size:8px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;}
+.ch-right .rv{font-size:17px;font-weight:900;color:var(--yellow);}
+.nome-produto{background:var(--yellow);padding:10px 16px;font-size:12px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e6c000;}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:#111;}
+thead th{padding:8px 9px;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:var(--yellow);text-align:right;}
+thead th:first-child{text-align:center;}
+tbody tr:nth-child(odd){background:var(--yellow2);}
+tbody tr:nth-child(even){background:var(--yellow);}
+tbody tr.dest{background:#111;}
+tbody td{padding:8px 9px;text-align:right;font-size:12px;font-weight:600;color:#111;}
+tbody tr.dest td{color:var(--yellow);}
+tbody td:first-child{text-align:center;font-size:11px;font-weight:900;}
+.vc{font-weight:900;font-size:13px;}.vp{font-weight:700;font-size:12px;}.vl{font-size:10px;font-weight:600;opacity:.7;}
+.card-footer{background:#111;padding:9px 16px;text-align:center;font-size:8px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#444;}
+.card-footer b{color:var(--yellow);}
+/* SHARE */
+#shareArea{display:none;background:#111;padding:14px;margin-top:0;}
+.share-section-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #222;}
+.share-section-title.gold{color:var(--yellow);}
+.share-section-title.grey{color:#555;}
+.share-row{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:12px;margin-bottom:8px;}
+.share-row.dest{border-color:var(--yellow);}
+.share-label{font-size:12px;font-weight:800;color:#fff;margin-bottom:3px;}
+.share-row.dest .share-label{color:var(--yellow);}
+.share-sub{font-size:10px;color:#555;margin-bottom:8px;}
+.msg-edit{width:100%;background:#111;border:1px solid #333;border-radius:8px;color:#fff;font-size:12px;line-height:1.5;padding:8px 10px;resize:vertical;min-height:58px;font-family:var(--font);outline:none;transition:border .15s;margin-bottom:8px;}
+.msg-edit:focus{border-color:var(--yellow);}
+.share-btns{display:flex;gap:6px;}
+.btn-share{padding:8px 14px;border-radius:8px;border:none;font-size:11px;font-weight:800;cursor:pointer;transition:all .15s;letter-spacing:.5px;}
+.btn-share.wpp{background:#25D366;color:#fff;}
+.btn-share.copy{background:#2a2a2a;color:#fff;border:1px solid #444;}
+.divider{height:1px;background:#222;margin:14px 0;}
+/* EDIÇÃO */
+#painelEdicao{display:none;max-width:480px;margin:0 auto;}
+#painelEdicao.aberto{display:block;}
+.aviso-edit{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;margin-bottom:13px;font-size:11px;color:var(--muted);line-height:1.85;}
+.aviso-edit b{color:var(--yellow);}
+.esec{background:var(--surface);border-radius:14px;border:1px solid var(--border);margin-bottom:13px;overflow:hidden;}
+.esec-h{background:#222;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.esec-h h3{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--yellow);}
+.esec-h .arr{font-size:11px;color:#555;transition:transform .2s;display:inline-block;}
+.esec-h.open .arr{transform:rotate(180deg);}
+.esec-b{padding:14px 15px;display:none;}
+.esec-b.open{display:block;}
+.cat-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;background:var(--bg);border-radius:8px;padding:9px 11px;border:1px solid var(--border);}
+.cat-icon{font-size:14px;flex-shrink:0;}
+input.cat-name{flex:1;font-size:13px;font-weight:800;background:transparent;border:none;color:#fff;font-family:var(--font);outline:none;min-width:0;}
+.btn-dc{background:none;border:none;color:#444;font-size:15px;cursor:pointer;padding:0 3px;flex-shrink:0;}
+.prod-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;background:var(--bg);border-radius:8px;padding:8px 10px;border:1px solid var(--border);}
+input.pn{flex:2;font-size:12px;font-weight:600;background:transparent;border:none;color:#ccc;font-family:var(--font);outline:none;min-width:0;}
+.sep2{color:#333;font-size:13px;flex-shrink:0;}
+input.pv{width:86px;font-size:13px;font-weight:900;background:transparent;border:none;color:var(--yellow);font-family:var(--font);outline:none;text-align:right;flex-shrink:0;}
+.btn-dp{background:none;border:none;color:#333;font-size:13px;cursor:pointer;padding:0 2px;flex-shrink:0;}
+.btn-ap{width:100%;padding:9px;border-radius:8px;border:1.5px dashed var(--border);background:transparent;color:#555;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:5px;}
+.btn-ac{width:100%;padding:11px;border-radius:10px;border:1.5px dashed #333;background:transparent;color:#555;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-bottom:13px;}
+.hr-c{border:none;border-top:1px solid #222;margin:13px 0;}
+.ti{font-size:10px;color:#555;margin-bottom:11px;line-height:1.7;}
+.taxa-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;background:var(--bg);border-radius:8px;padding:7px 11px;border:1px solid var(--border);}
+.tx-l{font-size:11px;font-weight:800;color:#555;width:34px;flex-shrink:0;}
+input.tv{flex:1;font-size:13px;font-weight:800;background:transparent;border:none;color:var(--yellow);font-family:var(--font);outline:none;text-align:right;min-width:0;}
+.tx-u{font-size:11px;color:#555;flex-shrink:0;}
+.btn-salvar{width:100%;padding:14px;border-radius:10px;border:none;background:var(--yellow);color:#111;font-family:var(--font);font-size:13px;font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:2px;margin-top:4px;}
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--yellow);color:#111;padding:11px 24px;border-radius:50px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1px;transition:transform .28s cubic-bezier(.34,1.56,.64,1);z-index:9999;pointer-events:none;white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+.vazio{text-align:center;padding:28px;color:#111;font-size:11px;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="topo">
+  <div class="marca">E-pulse Veículos Elétricos</div>
+  <h1>Simulador de Parcelamento</h1>
+</div>
+
+<div class="tabs" id="tabsBar"></div>
+
+<div class="input-area" id="inputArea">
+  <label>Valor à vista que você quer receber (R$)</label>
+  <div class="input-row">
+    <span class="prefix">R$</span>
+    <input type="text" id="valorInput" placeholder="0,00" inputmode="decimal" autocomplete="off"/>
+  </div>
+  <div class="produtos-label" id="prodLabel">Produtos · toque para preencher</div>
+  <div class="produtos-grid" id="prodGrid"></div>
+</div>
+
+<div id="card">
+  <div class="card-header">
+    <div class="ch-left">
+      <div class="brand">E-pulse · Criciúma</div>
+      <h2>Tabela de Parcelamento</h2>
+    </div>
+    <div class="ch-right">
+      <div class="rl">Você recebe</div>
+      <div class="rv" id="valorRef">R$&nbsp;—</div>
+    </div>
+  </div>
+  <div class="nome-produto" id="nomeProd">Selecione um produto acima ↑</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Parc.</th><th>Cobrar cliente</th><th>Valor parcela</th><th>Você recebe</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="4" class="vazio">Selecione um produto ou digite o valor ↑</td></tr>
+    </tbody>
+  </table>
+  <div class="card-footer">Taxas: <b>Contenção TR · 0012-26 Dinâmico</b> · Juros Estabelecimento</div>
+
+  <div id="shareArea">
+    <div class="share-section-title gold">📊 Tabela completa para o cliente</div>
+    <div class="share-row dest">
+      <textarea id="msgTabela" class="msg-edit" style="min-height:110px;"></textarea>
+      <div class="share-btns">
+        <button class="btn-share wpp" id="btnTabelaWpp">💬 WhatsApp</button>
+        <button class="btn-share copy" id="btnTabelaCopy">📋 Copiar</button>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="share-section-title grey">✉️ Enviar parcela individual</div>
+    <div id="shareRows"></div>
+  </div>
+</div>
+
+<div id="painelEdicao">
+  <div class="aviso-edit">
+    ✏️ <b>Modo Edição</b><br>
+    Toque em qualquer nome ou valor para editar.<br>
+    Clique em <b>Salvar Alterações</b> para aplicar.
+  </div>
+  <div class="esec" id="secP">
+    <div class="esec-h open" onclick="toggleSec('secP')">
+      <h3>📦 Categorias e Produtos</h3><span class="arr open">▼</span>
+    </div>
+    <div class="esec-b open" id="bodyP"></div>
+  </div>
+  <div class="esec" id="secT">
+    <div class="esec-h" onclick="toggleSec('secT')">
+      <h3>💳 Taxas por Parcela</h3><span class="arr">▼</span>
+    </div>
+    <div class="esec-b" id="bodyT"></div>
+  </div>
+  <button class="btn-salvar" onclick="salvar()">✅ Salvar Alterações</button>
+</div>
+
+<div id="toast">✅ Alterações salvas!</div>
+
+<script>
+var taxas=[
+  {p:1,j:3.53},{p:2,j:4.54},{p:3,j:5.25},{p:4,j:5.96},
+  {p:5,j:6.67},{p:6,j:7.36},{p:7,j:8.25},{p:8,j:8.93},
+  {p:9,j:9.61},{p:10,j:10.27},{p:11,j:10.93},{p:12,j:11.59},
+  {p:13,j:12.27},{p:14,j:12.91},{p:15,j:13.55},{p:16,j:14.18},
+  {p:17,j:14.80},{p:18,j:15.41},{p:19,j:16.02},{p:20,j:16.63},
+  {p:21,j:17.23},{p:22,j:17.82},{p:23,j:18.40},{p:24,j:18.98}
+];
+
+var cats=[
+  {id:'sc',nome:'Scooters',prods:[
+    {n:'YOO 200 500W',v:4250},{n:'EAGLE 1000W',v:8000},{n:'TORINO 1000W',v:8500},
+    {n:'ULTRA X 1000W',v:8000},{n:'STORM 1000W',v:9800},{n:'BLIZZARD 1000W',v:9800},
+    {n:'ULTRAMAX 1000W',v:11500},{n:'CAPRI 1000W',v:11500},{n:'TRICICLO ULTRA TREE',v:10500},
+    {n:'EVO E4 PLUS 1000W',v:6500},{n:'EFLOW E9 1000W',v:9990},
+    {n:'SCOOTER POP 500W',v:4250},{n:'EFLOW P13 1000W',v:8999}
+  ]},
+  {id:'bk',nome:'Bikes',prods:[
+    {n:'ULTRAMOVIE R9 750W',v:7500},{n:'STREET GO S12 750W',v:8500},
+    {n:'COSWHEEL Y16 1000W',v:7800},{n:'EFLOW S20 750W SEMI',v:7000},
+    {n:'EFLOW D20 750W',v:8500},{n:'EVOO E20 1000W',v:8000},
+    {n:'V8 PRO 1000W',v:8500},{n:'OUXI GT20/Q8 1000W',v:8999},
+    {n:'EVOO TANK 500W',v:6500},{n:'EVOO VIBE 50',v:7990}
+  ]},
+  {id:'pt',nome:'Patinetes',prods:[
+    {n:'FORCE 350W',v:2800},{n:'G1 350W',v:3500},{n:'G2 800W',v:5590},
+    {n:'G3 PRO 800W',v:6590},{n:'STREET OU JOY 500W',v:5500},{n:'DRIFT CRAZY',v:1899}
+  ]}
+];
+
+var catAtual='sc', nomeAtual='', modoEdit=false;
+
+function f2(n){return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmt(n){return 'R$ '+f2(n);}
+function parseBR(s){return parseFloat(String(s).replace(/\./g,'').replace(',','.'))||0;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function renderTabs(){
+  var bar=document.getElementById('tabsBar');
+  bar.innerHTML='';
+  cats.forEach(function(c){
+    var b=document.createElement('button');
+    b.className='tab'+(c.id===catAtual&&!modoEdit?' active':'');
+    b.textContent=c.nome;
+    b.onclick=function(){if(modoEdit)return;catAtual=c.id;nomeAtual='';document.getElementById('valorInput').value='';renderTabs();renderProds();};
+    bar.appendChild(b);
+  });
+  var m=document.createElement('button');
+  m.className='tab'+(catAtual==='man'&&!modoEdit?' active':'');
+  m.textContent='Digitar';
+  m.onclick=function(){if(modoEdit)return;catAtual='man';nomeAtual='Valor personalizado';document.getElementById('prodGrid').innerHTML='';document.getElementById('prodLabel').style.display='none';document.getElementById('valorInput').value='';renderTabs();document.getElementById('valorInput').focus();};
+  bar.appendChild(m);
+  var e=document.createElement('button');
+  e.className='tab edit-tab'+(modoEdit?' active':'');
+  e.textContent=modoEdit?'Fechar':'Editar';
+  e.onclick=toggleEdit;
+  bar.appendChild(e);
+}
+
+function renderProds(){
+  if(catAtual==='man')return;
+  var cat=cats.find(function(c){return c.id===catAtual;});
+  if(!cat)return;
+  document.getElementById('prodLabel').style.display='block';
+  var g=document.getElementById('prodGrid');
+  g.innerHTML='';
+  cat.prods.forEach(function(p){
+    var b=document.createElement('button');
+    b.className='prod-btn';
+    var sp1=document.createElement('span');sp1.className='pnome';sp1.textContent=p.n;
+    var sp2=document.createElement('span');sp2.className='ppreco';sp2.textContent='R$ '+f2(p.v);
+    b.appendChild(sp1);b.appendChild(sp2);
+    b.onclick=function(){
+      document.querySelectorAll('.prod-btn').forEach(function(x){x.classList.remove('selected');});
+      b.classList.add('selected');
+      document.getElementById('valorInput').value=f2(p.v);
+      nomeAtual=p.n;
+      calc();
+    };
+    g.appendChild(b);
+  });
+}
+
+function calc(){
+  var v=parseBR(document.getElementById('valorInput').value);
+  if(!v||v<=0)return;
+  document.getElementById('valorRef').textContent='R$ '+f2(v);
+  document.getElementById('nomeProd').textContent=nomeAtual||'R$ '+f2(v);
+
+  var tb=document.getElementById('tbody');
+  tb.innerHTML='';
+  var dest=[1,6,12,18,24];
+  var shareRows=document.getElementById('shareRows');
+  shareRows.innerHTML='';
+
+  var nomeProd=nomeAtual||'o produto';
+  var linhas=[];
+  linhas.push('Produto: *'+nomeProd+'*');
+  linhas.push('Formas de pagamento:');
+  linhas.push('');
+
+  taxas.forEach(function(t){
+    var cobrar=v/(1-t.j/100);
+    var parc=cobrar/t.p;
+    var isDest=dest.indexOf(t.p)>=0;
+
+    // linha da tabela
+    var tr=document.createElement('tr');
+    if(isDest)tr.classList.add('dest');
+    var td1=document.createElement('td');td1.textContent=t.p+'x';
+    var td2=document.createElement('td');td2.className='vc';td2.textContent=fmt(cobrar);
+    var td3=document.createElement('td');td3.className='vp';td3.textContent=fmt(parc);
+    var td4=document.createElement('td');td4.className='vl';td4.textContent=fmt(v);
+    tr.appendChild(td1);tr.appendChild(td2);tr.appendChild(td3);tr.appendChild(td4);
+    tb.appendChild(tr);
+
+    // mensagem tabela
+    if(t.p===1){
+      linhas.push('- A vista: *R$ '+f2(cobrar)+'*');
+    } else {
+      linhas.push('- '+t.p+'x de *R$ '+f2(parc)+'*');
+    }
+
+    // linha de share individual
+    var msgIndiv=t.p===1
+      ? 'Ola! O valor de *'+nomeProd+'* a vista e *R$ '+f2(cobrar)+'*. Pagamento via cartao.'
+      : 'Ola! O valor de *'+nomeProd+'* parcelado em *'+t.p+'x de R$ '+f2(parc)+'* no cartao.';
+
+    var msgId='msg_'+t.p;
+    var row=document.createElement('div');
+    row.className='share-row'+(isDest?' dest':'');
+
+    var lbl=document.createElement('div');lbl.className='share-label';
+    lbl.textContent=t.p===1?'A vista':t.p+'x de R$ '+f2(parc);
+    var sub=document.createElement('div');sub.className='share-sub';
+    sub.textContent=t.p===1?'Cobrar: R$ '+f2(cobrar):'Total: R$ '+f2(cobrar);
+
+    var ta=document.createElement('textarea');
+    ta.id=msgId;ta.className='msg-edit';ta.value=msgIndiv;
+
+    var btns=document.createElement('div');btns.className='share-btns';
+    var bw=document.createElement('button');bw.className='btn-share wpp';bw.textContent='WhatsApp';
+    var bc=document.createElement('button');bc.className='btn-share copy';bc.textContent='Copiar';
+
+    (function(id,btn){
+      bw.onclick=function(){window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById(id).value),'_blank');};
+      bc.onclick=function(){copiarTexto(btn,id);};
+    })(msgId,bc);
+
+    btns.appendChild(bw);btns.appendChild(bc);
+    row.appendChild(lbl);row.appendChild(sub);row.appendChild(ta);row.appendChild(btns);
+    shareRows.appendChild(row);
+  });
+
+  linhas.push('');
+  linhas.push('Pagamento via cartao de credito.');
+  document.getElementById('msgTabela').value=linhas.join('\n');
+  document.getElementById('shareArea').style.display='block';
+}
+
+function copiarTexto(btn,id){
+  var msg=document.getElementById(id).value;
+  var orig=btn.textContent;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(msg).then(function(){
+      btn.textContent='Copiado!';btn.style.background='#25D366';
+      setTimeout(function(){btn.textContent=orig;btn.style.background='';},2000);
+    });
+  } else {
+    var ta=document.createElement('textarea');ta.value=msg;
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    btn.textContent='Copiado!';btn.style.background='#25D366';
+    setTimeout(function(){btn.textContent=orig;btn.style.background='';},2000);
+  }
+}
+
+document.getElementById('btnTabelaWpp').onclick=function(){
+  window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById('msgTabela').value),'_blank');
+};
+document.getElementById('btnTabelaCopy').onclick=function(){
+  copiarTexto(document.getElementById('btnTabelaCopy'),'msgTabela');
+};
+
+function toggleEdit(){
+  modoEdit=!modoEdit;
+  document.getElementById('inputArea').style.display=modoEdit?'none':'block';
+  document.getElementById('card').style.display=modoEdit?'none':'block';
+  document.getElementById('painelEdicao').classList.toggle('aberto',modoEdit);
+  if(modoEdit)renderEdit();
+  renderTabs();
+}
+
+function toggleSec(id){
+  var s=document.getElementById(id);
+  var h=s.querySelector('.esec-h');
+  var b=s.querySelector('.esec-b');
+  h.classList.toggle('open');b.classList.toggle('open');
+  h.querySelector('.arr').classList.toggle('open');
+}
+
+function lerInputs(){
+  document.querySelectorAll('[data-ci][data-pi]').forEach(function(inp){
+    var ci=+inp.dataset.ci,pi=+inp.dataset.pi;
+    if(!cats[ci]||!cats[ci].prods[pi])return;
+    if(inp.classList.contains('pn'))cats[ci].prods[pi].n=inp.value;
+    if(inp.classList.contains('pv'))cats[ci].prods[pi].v=parseBR(inp.value);
+  });
+  document.querySelectorAll('[data-cn]').forEach(function(inp){
+    var ci=+inp.dataset.cn;if(cats[ci])cats[ci].nome=inp.value;
+  });
+}
+
+function renderEdit(){renderEditProds();renderEditTaxas();}
+
+function renderEditProds(){
+  var body=document.getElementById('bodyP');
+  body.innerHTML='';
+  cats.forEach(function(cat,ci){
+    var cRow=document.createElement('div');cRow.className='cat-row';
+    var icon=document.createElement('span');icon.className='cat-icon';icon.textContent='📁';
+    var inp=document.createElement('input');inp.className='cat-name';inp.type='text';inp.value=cat.nome;inp.setAttribute('data-cn',ci);
+    var del=document.createElement('button');del.className='btn-dc';del.textContent='🗑️';del.setAttribute('data-dc',ci);
+    cRow.appendChild(icon);cRow.appendChild(inp);cRow.appendChild(del);body.appendChild(cRow);
+    var pd=document.createElement('div');pd.style.paddingLeft='6px';
+    cat.prods.forEach(function(p,pi){
+      var r=document.createElement('div');r.className='prod-row';
+      var pn=document.createElement('input');pn.className='pn';pn.type='text';pn.value=p.n;pn.setAttribute('data-ci',ci);pn.setAttribute('data-pi',pi);
+      var sep=document.createElement('span');sep.className='sep2';sep.textContent='·';
+      var pv=document.createElement('input');pv.className='pv';pv.type='text';pv.value=f2(p.v);pv.setAttribute('inputmode','decimal');pv.setAttribute('data-ci',ci);pv.setAttribute('data-pi',pi);
+      var dp=document.createElement('button');dp.className='btn-dp';dp.textContent='✕';dp.setAttribute('data-dp',ci+'-'+pi);
+      r.appendChild(pn);r.appendChild(sep);r.appendChild(pv);r.appendChild(dp);pd.appendChild(r);
+    });
+    var ap=document.createElement('button');ap.className='btn-ap';ap.textContent='+ Adicionar produto';ap.setAttribute('data-ap',ci);
+    pd.appendChild(ap);body.appendChild(pd);
+    if(ci<cats.length-1){var hr=document.createElement('hr');hr.className='hr-c';body.appendChild(hr);}
+  });
+  var ac=document.createElement('button');ac.className='btn-ac';ac.id='btnAC';ac.textContent='+ Adicionar nova categoria';
+  body.appendChild(ac);
+  body.onclick=function(e){
+    var dc=e.target.closest('[data-dc]');
+    var dp=e.target.closest('[data-dp]');
+    var ap=e.target.closest('[data-ap]');
+    var ac=e.target.closest('#btnAC');
+    if(dc){lerInputs();var ci=+dc.dataset.dc;if(!confirm('Remover "'+cats[ci].nome+'"?'))return;cats.splice(ci,1);if(!cats.find(function(c){return c.id===catAtual;}))catAtual=cats[0]?cats[0].id:'man';renderEditProds();}
+    if(dp){lerInputs();var parts=dp.dataset.dp.split('-');cats[+parts[0]].prods.splice(+parts[1],1);renderEditProds();}
+    if(ap){lerInputs();cats[+ap.dataset.ap].prods.push({n:'Novo produto',v:0});renderEditProds();}
+    if(ac){lerInputs();cats.push({id:'c'+Date.now(),nome:'Nova categoria',prods:[]});renderEditProds();}
+  };
+}
+
+function renderEditTaxas(){
+  var body=document.getElementById('bodyT');body.innerHTML='';
+  var p=document.createElement('p');p.className='ti';p.textContent='Edite a taxa (%) de cada parcelamento conforme sua operadora.';
+  body.appendChild(p);
+  taxas.forEach(function(t,i){
+    var r=document.createElement('div');r.className='taxa-row';
+    var lbl=document.createElement('span');lbl.className='tx-l';lbl.textContent=t.p+'x';
+    var inp=document.createElement('input');inp.className='tv';inp.type='text';inp.value=t.j.toFixed(2);inp.setAttribute('inputmode','decimal');inp.setAttribute('data-ti',i);
+    var uni=document.createElement('span');uni.className='tx-u';uni.textContent='%';
+    inp.addEventListener('change',function(){taxas[+inp.dataset.ti].j=parseFloat(inp.value.replace(',','.'))||0;});
+    r.appendChild(lbl);r.appendChild(inp);r.appendChild(uni);body.appendChild(r);
+  });
+}
+
+function salvar(){
+  lerInputs();
+  document.querySelectorAll('.tv').forEach(function(inp){taxas[+inp.dataset.ti].j=parseFloat(inp.value.replace(',','.'))||0;});
+  toggleEdit();renderProds();
+  var t=document.getElementById('toast');t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2500);
+}
+
+document.getElementById('valorInput').addEventListener('input',function(){
+  if(!nomeAtual)nomeAtual='Valor personalizado';
+  calc();
+});
+
+renderTabs();
+renderProds();
+</script>
+</body>
+</html>
