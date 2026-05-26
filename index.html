@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Simulador E-pulse · Contenção TR</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --yellow:#FFD600;--yellow2:#FFE033;--bg:#111111;--surface:#1a1a1a;
+  --border:#2a2a2a;--muted:#666;--orange:#ff6b35;--red:#ff4466;--green:#00c853;
+}
+body{font-family:var(--font);background:var(--bg);min-height:100vh;padding:20px 14px 90px;color:#fff;-webkit-font-smoothing:antialiased;}
+
+/* TOPO */
+.topo{text-align:center;margin-bottom:18px;}
+.marca{font-size:10px;font-weight:800;letter-spacing:5px;text-transform:uppercase;color:var(--yellow);margin-bottom:5px;}
+.topo h1{font-size:19px;font-weight:900;text-transform:uppercase;letter-spacing:-.3px;color:#fff;}
+
+/* STATUS FIREBASE */
+#fbStatus{
+  max-width:480px;margin:0 auto 12px;padding:9px 14px;border-radius:8px;
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+  text-align:center;display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:all .3s;
+}
+#fbStatus.conectando{background:#1a1a1a;border:1px solid #333;color:#555;}
+#fbStatus.online{background:rgba(0,200,83,.1);border:1px solid rgba(0,200,83,.3);color:var(--green);}
+#fbStatus.offline{background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.25);color:var(--red);}
+.fb-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+/* TABS */
+.tabs{display:flex;gap:6px;max-width:480px;margin:0 auto 14px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;padding:8px 13px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-family:var(--font);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;cursor:pointer;transition:all .18s;white-space:nowrap;}
+.tab.active{background:var(--yellow);border-color:var(--yellow);color:#111;}
+.tab.edit-tab{border-color:#333;color:#555;}
+.tab.edit-tab.active{background:var(--orange);border-color:var(--orange);color:#fff;}
+
+/* INPUT */
+.input-area{max-width:480px;margin:0 auto 16px;background:var(--surface);border-radius:14px;padding:16px;border:1px solid var(--border);}
+.input-area label{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:9px;}
+.input-row{display:flex;gap:8px;align-items:stretch;}
+.prefix{background:var(--yellow);color:#111;font-weight:900;font-size:15px;padding:0 13px;border-radius:8px;display:flex;align-items:center;flex-shrink:0;}
+input[type=text]{flex:1;background:var(--bg);border:2px solid var(--border);border-radius:8px;padding:11px 13px;font-family:var(--font);font-size:21px;font-weight:800;color:#fff;outline:none;transition:border-color .18s;min-width:0;}
+input[type=text]:focus{border-color:var(--yellow);}
+.produtos-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#444;margin-top:13px;margin-bottom:8px;}
+.produtos-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:220px;overflow-y:auto;}
+.prod-btn{background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left;transition:all .13s;}
+.prod-btn:active,.prod-btn.selected{border-color:var(--yellow);background:rgba(255,214,0,.07);}
+.pnome{font-size:10px;font-weight:700;color:#ccc;display:block;line-height:1.3;margin-bottom:3px;}
+.ppreco{font-size:12px;font-weight:900;color:var(--yellow);}
+
+/* CARD */
+#card{width:100%;max-width:480px;margin:0 auto;background:var(--yellow);border-radius:18px;overflow:hidden;box-shadow:0 8px 32px rgba(255,214,0,.18);}
+.card-header{background:#111;padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.ch-left .brand{font-size:8px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--yellow);margin-bottom:2px;}
+.ch-left h2{font-size:12px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:.3px;}
+.ch-right{text-align:right;flex-shrink:0;}
+.ch-right .rl{font-size:8px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;}
+.ch-right .rv{font-size:17px;font-weight:900;color:var(--yellow);}
+.nome-produto{background:var(--yellow);padding:10px 16px;font-size:12px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e6c000;}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:#111;}
+thead th{padding:8px 9px;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:var(--yellow);text-align:right;}
+thead th:first-child{text-align:center;}
+tbody tr:nth-child(odd){background:var(--yellow2);}
+tbody tr:nth-child(even){background:var(--yellow);}
+tbody tr.dest{background:#111;}
+tbody td{padding:8px 9px;text-align:right;font-size:12px;font-weight:600;color:#111;}
+tbody tr.dest td{color:var(--yellow);}
+tbody td:first-child{text-align:center;font-size:11px;font-weight:900;}
+.vc{font-weight:900;font-size:13px;}.vp{font-weight:700;font-size:12px;}.vl{font-size:10px;font-weight:600;opacity:.7;}
+.card-footer{background:#111;padding:9px 16px;text-align:center;font-size:8px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#444;}
+.card-footer b{color:var(--yellow);}
+
+/* PAINEL EDIÇÃO */
+#painelEdicao{display:none;max-width:480px;margin:0 auto;}
+#painelEdicao.aberto{display:block;}
+.aviso-edit{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;margin-bottom:13px;font-size:11px;color:var(--muted);line-height:1.85;}
+.aviso-edit b{color:var(--yellow);}.aviso-edit i{color:#ccc;font-style:normal;}
+.esec{background:var(--surface);border-radius:14px;border:1px solid var(--border);margin-bottom:13px;overflow:hidden;}
+.esec-h{background:#222;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.esec-h h3{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--yellow);}
+.esec-h .arr{font-size:11px;color:#555;transition:transform .2s;display:inline-block;}
+.esec-h.open .arr{transform:rotate(180deg);}
+.esec-b{padding:14px 15px;display:none;}
+.esec-b.open{display:block;}
+.cat-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;background:var(--bg);border-radius:8px;padding:9px 11px;border:1px solid var(--border);}
+.cat-icon{font-size:14px;flex-shrink:0;}
+input.cat-name{flex:1;font-size:13px;font-weight:800;background:transparent;border:none;color:#fff;font-family:var(--font);outline:none;min-width:0;}
+input.cat-name:focus{border-bottom:1px solid var(--yellow);}
+.btn-dc{background:none;border:none;color:#444;font-size:15px;cursor:pointer;padding:0 3px;flex-shrink:0;}
+.prod-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;background:var(--bg);border-radius:8px;padding:8px 10px;border:1px solid var(--border);}
+input.pn{flex:2;font-size:12px;font-weight:600;background:transparent;border:none;color:#ccc;font-family:var(--font);outline:none;min-width:0;}
+input.pn:focus{border-bottom:1px solid var(--yellow);}
+.sep2{color:#333;font-size:13px;flex-shrink:0;}
+input.pv{width:86px;font-size:13px;font-weight:900;background:transparent;border:none;color:var(--yellow);font-family:var(--font);outline:none;text-align:right;flex-shrink:0;}
+input.pv:focus{border-bottom:1px solid var(--yellow);}
+.btn-dp{background:none;border:none;color:#333;font-size:13px;cursor:pointer;padding:0 2px;flex-shrink:0;}
+.btn-ap{width:100%;padding:9px;border-radius:8px;border:1.5px dashed var(--border);background:transparent;color:#555;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:5px;}
+.btn-ac{width:100%;padding:11px;border-radius:10px;border:1.5px dashed #333;background:transparent;color:#555;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-bottom:13px;}
+.hr-c{border:none;border-top:1px solid #222;margin:13px 0;}
+.ti{font-size:10px;color:#555;margin-bottom:11px;line-height:1.7;}
+.taxa-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;background:var(--bg);border-radius:8px;padding:7px 11px;border:1px solid var(--border);}
+.tx-l{font-size:11px;font-weight:800;color:#555;width:34px;flex-shrink:0;}
+input.tv{flex:1;font-size:13px;font-weight:800;background:transparent;border:none;color:var(--yellow);font-family:var(--font);outline:none;text-align:right;min-width:0;}
+input.tv:focus{border-bottom:1px solid var(--yellow);}
+.tx-u{font-size:11px;color:#555;flex-shrink:0;}
+.btn-salvar{width:100%;padding:14px;border-radius:10px;border:none;background:var(--yellow);color:#111;font-family:var(--font);font-size:13px;font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:2px;margin-top:4px;}
+.btn-salvar:active{opacity:.8;}
+
+/* TOAST */
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--yellow);color:#111;padding:11px 24px;border-radius:50px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1px;transition:transform .28s cubic-bezier(.34,1.56,.64,1);z-index:9999;pointer-events:none;white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+.vazio{text-align:center;padding:28px;color:#111;font-size:11px;font-weight:700;}
+
+/* LOADING OVERLAY */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9998;gap:14px;transition:opacity .4s;}
+#loading.hide{opacity:0;pointer-events:none;}
+.spin{width:36px;height:36px;border:3px solid #222;border-top-color:var(--yellow);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:2px;}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="spin"></div>
+  <p>Conectando ao Firebase…</p>
+</div>
+
+<div class="topo">
+  <div class="marca">E-pulse Veículos Elétricos</div>
+  <h1>Simulador de Parcelamento</h1>
+</div>
+
+<!-- STATUS FIREBASE -->
+<div id="fbStatus" class="conectando">
+  <span class="fb-dot"></span>
+  <span id="fbStatusTxt">Conectando…</span>
+</div>
+
+<div class="tabs" id="tabsBar"></div>
+
+<div class="input-area" id="inputArea">
+  <label>Valor à vista que você quer receber (R$)</label>
+  <div class="input-row">
+    <span class="prefix">R$</span>
+    <input type="text" id="valorInput" placeholder="0,00" inputmode="decimal" autocomplete="off"/>
+  </div>
+  <div class="produtos-label" id="prodLabel">Produtos · toque para preencher</div>
+  <div class="produtos-grid" id="prodGrid"></div>
+</div>
+
+<div id="card">
+  <div class="card-header">
+    <div class="ch-left">
+      <div class="brand">E-pulse · Criciúma</div>
+      <h2>Tabela de Parcelamento</h2>
+    </div>
+    <div class="ch-right">
+      <div class="rl">Você recebe</div>
+      <div class="rv" id="valorRef">R$&nbsp;—</div>
+    </div>
+  </div>
+  <div class="nome-produto" id="nomeProd">Selecione um produto acima ↑</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Parc.</th><th>Cobrar cliente</th><th>Valor parcela</th><th>Você recebe</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="4" class="vazio">Selecione um produto ou digite o valor ↑</td></tr>
+    </tbody>
+  </table>
+  <div class="card-footer">Taxas: <b>Contenção TR · 0012-26 Dinâmico</b> · Juros Estabelecimento</div>
+</div>
+
+<!-- PAINEL EDIÇÃO -->
+<div id="painelEdicao">
+  <div class="aviso-edit">
+    ✏️ <b>Modo Edição</b> — <i>Toque em qualquer nome ou valor para editar.</i><br>
+    Alterações são salvas na <b>nuvem</b> e aparecem em todos os dispositivos.
+  </div>
+  <div class="esec" id="secP">
+    <div class="esec-h open" onclick="toggleSec('secP')">
+      <h3>📦 Categorias e Produtos</h3><span class="arr open">▼</span>
+    </div>
+    <div class="esec-b open" id="bodyP"></div>
+  </div>
+  <div class="esec" id="secT">
+    <div class="esec-h" onclick="toggleSec('secT')">
+      <h3>💳 Taxas por Parcela</h3><span class="arr">▼</span>
+    </div>
+    <div class="esec-b" id="bodyT"></div>
+  </div>
+  <button class="btn-salvar" onclick="salvar()">☁️ Salvar na Nuvem</button>
+</div>
+
+<div id="toast">☁️ Salvo na nuvem!</div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+/* ══ CONFIG FIREBASE ══ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCFTGkr6qavQnyc7M7ug9NW79PJGgxUsJ8",
+  authDomain: "calculadora-e-pulse.firebaseapp.com",
+  projectId: "calculadora-e-pulse",
+  storageBucket: "calculadora-e-pulse.firebasestorage.app",
+  messagingSenderId: "1079738494289",
+  appId: "1:1079738494289:web:b53f238bf6f1d442273770"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+/* ══ DADOS PADRÃO (usados se Firestore estiver vazio) ══ */
+const TAXAS_DEFAULT = [
+  {p:1,j:3.53},{p:2,j:4.54},{p:3,j:5.25},{p:4,j:5.96},
+  {p:5,j:6.67},{p:6,j:7.36},{p:7,j:8.25},{p:8,j:8.93},
+  {p:9,j:9.61},{p:10,j:10.27},{p:11,j:10.93},{p:12,j:11.59},
+  {p:13,j:12.27},{p:14,j:12.91},{p:15,j:13.55},{p:16,j:14.18},
+  {p:17,j:14.80},{p:18,j:15.41},{p:19,j:16.02},{p:20,j:16.63},
+  {p:21,j:17.23},{p:22,j:17.82},{p:23,j:18.40},{p:24,j:18.98},
+];
+const CATS_DEFAULT = [
+  {id:'sc',nome:'Scooters',prods:[
+    {n:'YOO 200 500W',v:4250},{n:'EAGLE 1000W',v:8000},{n:'TORINO 1000W',v:8500},
+    {n:'ULTRA X 1000W',v:8000},{n:'STORM 1000W',v:9800},{n:'BLIZZARD 1000W',v:9800},
+    {n:'ULTRAMAX 1000W',v:11500},{n:'CAPRI 1000W',v:11500},{n:'TRÍCICLO ULTRA TREE',v:10500},
+    {n:'EVO E4 PLUS 1000W',v:6500},{n:'EFLOW E9 1000W',v:9990},
+    {n:'SCOOTER POP 500W',v:4250},{n:'EFLOW P13 1000W',v:8999},
+  ]},
+  {id:'bk',nome:'Bikes',prods:[
+    {n:'ULTRAMOVIE R9 750W',v:7500},{n:'STREET GO S12 750W',v:8500},
+    {n:'COSWHEEL Y16 1000W',v:7800},{n:'EFLOW S20 750W SEMI',v:7000},
+    {n:'EFLOW D20 750W',v:8500},{n:'EVOO E20 1000W',v:8000},
+    {n:'V8 PRO 1000W',v:8500},{n:'OUXI GT20/Q8 1000W',v:8999},
+    {n:'EVOO TANK 500W',v:6500},{n:'EVOO VIBE 50',v:7990},
+  ]},
+  {id:'pt',nome:'Patinetes',prods:[
+    {n:'FORCE 350W',v:2800},{n:'G1 350W',v:3500},{n:'G2 800W',v:5590},
+    {n:'G3 PRO 800W',v:6590},{n:'STREET OU JOY 500W',v:5500},{n:'DRIFT CRAZY',v:1899},
+  ]},
+];
+
+/* ══ ESTADO ══ */
+let taxas    = TAXAS_DEFAULT;
+let cats     = CATS_DEFAULT;
+let catAtual = 'sc';
+let nomeAtual= '';
+let modoEdit = false;
+let salvando = false;
+
+/* ══ REFS FIRESTORE ══ */
+const docRef = doc(db, 'simulador', 'dados');
+
+/* ══ STATUS UI ══ */
+function setStatus(state, txt){
+  const el = document.getElementById('fbStatus');
+  const tx = document.getElementById('fbStatusTxt');
+  el.className = state;
+  tx.textContent = txt;
+}
+
+/* ══ CARREGAR DO FIRESTORE ══ */
+async function iniciar(){
+  try {
+    // Listener em tempo real — atualiza se outro device salvar
+    onSnapshot(docRef, (snap) => {
+      if(salvando) return; // evita loop ao salvar
+      if(snap.exists()){
+        const d = snap.data();
+        taxas = d.taxas || TAXAS_DEFAULT;
+        cats  = d.cats  || CATS_DEFAULT;
+      } else {
+        // primeiro acesso: gravar dados padrão
+        setDoc(docRef, { taxas: TAXAS_DEFAULT, cats: CATS_DEFAULT });
+      }
+      setStatus('online','☁️ Nuvem · Sincronizado');
+      esconderLoading();
+      renderTabs();
+      renderProds();
+    }, (err) => {
+      console.error(err);
+      setStatus('offline','⚠️ Sem conexão · Modo local');
+      esconderLoading();
+      renderTabs();
+      renderProds();
+    });
+  } catch(e){
+    setStatus('offline','⚠️ Erro de conexão');
+    esconderLoading();
+    renderTabs();
+    renderProds();
+  }
+}
+
+function esconderLoading(){
+  const l = document.getElementById('loading');
+  l.classList.add('hide');
+  setTimeout(()=>l.style.display='none', 400);
+}
+
+/* ══ SALVAR NO FIRESTORE ══ */
+async function salvarFirestore(){
+  salvando = true;
+  setStatus('conectando','Salvando…');
+  try {
+    await setDoc(docRef, { taxas, cats });
+    setStatus('online','☁️ Nuvem · Salvo com sucesso!');
+    setTimeout(()=>setStatus('online','☁️ Nuvem · Sincronizado'), 2500);
+  } catch(e){
+    setStatus('offline','⚠️ Erro ao salvar');
+  }
+  salvando = false;
+}
+
+/* ══ TABS ══ */
+function renderTabs(){
+  const bar = document.getElementById('tabsBar');
+  bar.innerHTML = '';
+  cats.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'tab'+(c.id===catAtual&&!modoEdit?' active':'');
+    b.textContent = c.nome;
+    b.onclick = ()=>{if(modoEdit)return;catAtual=c.id;nomeAtual='';document.getElementById('valorInput').value='';renderTabs();renderProds();};
+    bar.appendChild(b);
+  });
+  const m = document.createElement('button');
+  m.className = 'tab'+(catAtual==='man'&&!modoEdit?' active':'');
+  m.textContent = '✎ Digitar';
+  m.onclick = ()=>{if(modoEdit)return;catAtual='man';nomeAtual='Valor personalizado';document.getElementById('prodGrid').innerHTML='';document.getElementById('prodLabel').style.display='none';document.getElementById('valorInput').value='';renderTabs();document.getElementById('valorInput').focus();};
+  bar.appendChild(m);
+  const e = document.createElement('button');
+  e.className = 'tab edit-tab'+(modoEdit?' active':'');
+  e.textContent = modoEdit?'✕ Fechar':'⚙️ Editar';
+  e.onclick = toggleEdit;
+  bar.appendChild(e);
+}
+
+/* ══ PRODUTOS ══ */
+function renderProds(){
+  if(catAtual==='man') return;
+  const cat = cats.find(c=>c.id===catAtual);
+  if(!cat) return;
+  document.getElementById('prodLabel').style.display = 'block';
+  const g = document.getElementById('prodGrid');
+  g.innerHTML = '';
+  cat.prods.forEach(p=>{
+    const b = document.createElement('button');
+    b.className = 'prod-btn';
+    b.innerHTML = `<span class="pnome">${esc(p.n)}</span><span class="ppreco">R$ ${f2(p.v)}</span>`;
+    b.onclick = ()=>{
+      document.querySelectorAll('.prod-btn').forEach(x=>x.classList.remove('selected'));
+      b.classList.add('selected');
+      document.getElementById('valorInput').value = f2(p.v);
+      nomeAtual = p.n;
+      calc();
+    };
+    g.appendChild(b);
+  });
+}
+
+/* ══ CALCULAR ══ */
+function calc(){
+  const v = parseBR(document.getElementById('valorInput').value);
+  if(!v||v<=0) return;
+  document.getElementById('valorRef').textContent = 'R$ '+f2(v);
+  document.getElementById('nomeProd').textContent = nomeAtual||'R$ '+f2(v);
+  const tb = document.getElementById('tbody');
+  tb.innerHTML = '';
+  const dest = [1,6,12,18,24];
+  taxas.forEach(({p,j})=>{
+    const cobrar = v/(1-j/100), parc = cobrar/p;
+    const tr = document.createElement('tr');
+    if(dest.includes(p)) tr.classList.add('dest');
+    tr.innerHTML = `<td>${p}x</td><td class="vc">${fmt(cobrar)}</td><td class="vp">${fmt(parc)}</td><td class="vl">${fmt(v)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+/* ══ MODO EDIÇÃO ══ */
+function toggleEdit(){
+  modoEdit = !modoEdit;
+  document.getElementById('inputArea').style.display = modoEdit?'none':'block';
+  document.getElementById('card').style.display      = modoEdit?'none':'block';
+  document.getElementById('painelEdicao').classList.toggle('aberto', modoEdit);
+  if(modoEdit) renderEdit();
+  renderTabs();
+}
+
+function toggleSec(id){
+  const s=document.getElementById(id);
+  const h=s.querySelector('.esec-h');
+  const b=s.querySelector('.esec-b');
+  h.classList.toggle('open');
+  b.classList.toggle('open');
+  h.querySelector('.arr').classList.toggle('open');
+}
+
+function lerInputs(){
+  document.querySelectorAll('[data-ci][data-pi]').forEach(inp=>{
+    const ci=+inp.dataset.ci, pi=+inp.dataset.pi;
+    if(!cats[ci]||!cats[ci].prods[pi]) return;
+    if(inp.classList.contains('pn')) cats[ci].prods[pi].n = inp.value;
+    if(inp.classList.contains('pv')) cats[ci].prods[pi].v = parseBR(inp.value);
+  });
+  document.querySelectorAll('[data-cn]').forEach(inp=>{
+    const ci=+inp.dataset.cn;
+    if(cats[ci]) cats[ci].nome = inp.value;
+  });
+}
+
+function renderEdit(){ renderEditProds(); renderEditTaxas(); }
+
+function renderEditProds(){
+  const body = document.getElementById('bodyP');
+  body.innerHTML = '';
+  cats.forEach((cat,ci)=>{
+    const cRow = document.createElement('div');
+    cRow.className = 'cat-row';
+    cRow.innerHTML = `<span class="cat-icon">📁</span><input class="cat-name" type="text" value="${esc(cat.nome)}" placeholder="Nome da categoria" data-cn="${ci}"/><button class="btn-dc" data-dc="${ci}">🗑️</button>`;
+    body.appendChild(cRow);
+    const pd = document.createElement('div');
+    pd.style.paddingLeft = '6px';
+    cat.prods.forEach((p,pi)=>{
+      const r = document.createElement('div');
+      r.className = 'prod-row';
+      r.innerHTML = `<input class="pn" type="text" value="${esc(p.n)}" placeholder="Nome" data-ci="${ci}" data-pi="${pi}"/><span class="sep2">·</span><input class="pv" type="text" value="${f2(p.v)}" placeholder="0,00" inputmode="decimal" data-ci="${ci}" data-pi="${pi}"/><button class="btn-dp" data-dp="${ci}-${pi}">✕</button>`;
+      pd.appendChild(r);
+    });
+    const ap = document.createElement('button');
+    ap.className='btn-ap'; ap.textContent='+ Adicionar produto'; ap.setAttribute('data-ap',ci);
+    pd.appendChild(ap);
+    body.appendChild(pd);
+    if(ci<cats.length-1){const hr=document.createElement('hr');hr.className='hr-c';body.appendChild(hr);}
+  });
+  const ac = document.createElement('button');
+  ac.className='btn-ac'; ac.id='btnAC'; ac.textContent='+ Adicionar nova categoria';
+  body.appendChild(ac);
+  body.onclick = e=>{
+    const dc=e.target.closest('[data-dc]');
+    const dp=e.target.closest('[data-dp]');
+    const ap=e.target.closest('[data-ap]');
+    const ac=e.target.closest('#btnAC');
+    if(dc){lerInputs();const ci=+dc.dataset.dc;if(!confirm(`Remover "${cats[ci].nome}"?`))return;cats.splice(ci,1);if(!cats.find(c=>c.id===catAtual))catAtual=cats[0]?.id||'man';renderEditProds();}
+    if(dp){lerInputs();const[ci,pi]=dp.dataset.dp.split('-').map(Number);cats[ci].prods.splice(pi,1);renderEditProds();}
+    if(ap){lerInputs();const ci=+ap.dataset.ap;cats[ci].prods.push({n:'Novo produto',v:0});renderEditProds();}
+    if(ac){lerInputs();cats.push({id:'c'+Date.now(),nome:'Nova categoria',prods:[]});renderEditProds();}
+  };
+}
+
+function renderEditTaxas(){
+  const body = document.getElementById('bodyT');
+  body.innerHTML = '';
+  const p = document.createElement('p');
+  p.className='ti'; p.textContent='Edite a taxa (%) conforme sua operadora de cartão.';
+  body.appendChild(p);
+  taxas.forEach((t,i)=>{
+    const r = document.createElement('div');
+    r.className = 'taxa-row';
+    r.innerHTML = `<span class="tx-l">${t.p}x</span><input class="tv" type="text" value="${t.j.toFixed(2)}" inputmode="decimal" data-ti="${i}"/><span class="tx-u">%</span>`;
+    body.appendChild(r);
+  });
+  body.querySelectorAll('.tv').forEach(inp=>{
+    inp.addEventListener('change',()=>{taxas[+inp.dataset.ti].j=parseFloat(inp.value.replace(',','.'))||0;});
+  });
+}
+
+async function salvar(){
+  lerInputs();
+  document.querySelectorAll('.tv').forEach(inp=>{taxas[+inp.dataset.ti].j=parseFloat(inp.value.replace(',','.'))||0;});
+  toggleEdit();
+  renderProds();
+  await salvarFirestore();
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+/* ══ UTILS ══ */
+function f2(n){return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmt(n){return 'R$ '+f2(n);}
+function parseBR(s){return parseFloat(String(s).replace(/\./g,'').replace(',','.'))||0;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+document.getElementById('valorInput').addEventListener('input',()=>{
+  if(!nomeAtual) nomeAtual='Valor personalizado';
+  calc();
+});
+
+/* ══ INIT ══ */
+iniciar();
+
+// expor funções globais usadas pelo HTML (onclick inline)
+window.toggleSec = toggleSec;
+window.salvar    = salvar;
+window.toggleEdit = toggleEdit;
+</script>
+</body>
+</html>
